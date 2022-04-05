@@ -1,0 +1,17 @@
+<!-- Tabs -->
+<ul class="flex flex-wrap mb-4">
+    <li *ngFor="let tab of tabs" class="flex-auto text-center">
+      <!-- make inactive tab's text indigo when user hovers over, or text-white and bg indigo when tab is active -->
+      <a class="block rounded py-3 px-4 transition hover:text-white text-white
+        bg-indigo-400" href="#" (click)="selectTab(tab)"
+       
+        [ngClass]="{
+          'hover:text-indigo-400': !tab.active,
+          'hover:text-white text-white bg-indigo-400': tab.active
+        }"
+        >{{tab.tabTitle}}</a>
+    </li>
+  </ul>
+
+  <!-- content projection for providing the element -->
+  <ng-content></ng-content>
