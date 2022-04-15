@@ -3,6 +3,10 @@ import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 
 import { AuthService } from 'src/app/services/auth.service';
+// for password match validation
+import { RegisterValidators } from '../validators/register-validators';
+// for checking whether the email was taken
+import { EmailTaken } from '../validators/email-taken';
 
 @Component({
   selector: 'app-register',
@@ -17,7 +21,7 @@ import { AuthService } from 'src/app/services/auth.service';
 //   }
 // }
 export class RegisterComponent {
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService, private emailTaken: EmailTaken) {}
   // for tracking whether the form is being submitted
   inSubmittion = false;
   // new form controls
@@ -28,7 +32,11 @@ export class RegisterComponent {
     // we can use the html attribute for validation as well
     Validators.minLength(3),
   ]);
-  email = new FormControl('', [Validators.required, Validators.email]);
+  email = new FormControl(
+    '',
+    [Validators.required, Validators.email],
+    [this.emailTaken.validate]
+  );
   age = new FormControl('', [
     Validators.required,
     Validators.min(18),
@@ -52,14 +60,17 @@ export class RegisterComponent {
   alertColor = 'blue';
 
   // grouping forms
-  registerForm = new FormGroup({
-    name: this.name,
-    email: this.email,
-    age: this.age,
-    password: this.password,
-    confirm_password: this.confirm_password,
-    phoneNumber: this.phoneNumber,
-  });
+  registerForm = new FormGroup(
+    {
+      name: this.name,
+      email: this.email,
+      age: this.age,
+      password: this.password,
+      confirm_password: this.confirm_password,
+      phoneNumber: this.phoneNumber,
+    },
+    [RegisterValidators.match('password', 'confirm_password')]
+  );
 
   // reseting the alert to its default values
   // register() {

@@ -1,8 +1,12 @@
 <!-- <input formControlName="name" type="text" -->
-<input [formControl]="control" [type]="type"
-class="block w-full py-1.5 px-3 text-gray-200 border border-gray-400 transition
-    duration-500 focus:outline-none rounded bg-transparent focus:border-indigo-400"
-[placeholder]="placeholder" [mask]="format" [dropSpecialCharacters]="false"/>
+<input
+  [formControl]="control"
+  [type]="type"
+  class="block w-full py-1.5 px-3 text-gray-200 border border-gray-400 transition duration-500 focus:outline-none rounded bg-transparent focus:border-indigo-400"
+  [placeholder]="placeholder"
+  [mask]="format"
+  [dropSpecialCharacters]="false"
+/>
 <!-- <p>{{registerForm.controls.name?.errors}}</p> -->
 <!-- show the error p either if input field was blurred, the initial, empty, value has been changed
 an the input didn't pass the validation -->
@@ -16,29 +20,32 @@ an the input didn't pass the validation -->
     Plz type at least {{registerForm.controls['name'].errors?.['minlength'].requiredLength}} chars
 </p> -->
 <ng-container *ngIf="control.touched && control.dirty">
-    <p *ngIf="control.errors?.['pattern']" class="text-red-400">
-        Password must be at least 8 characters, must contain at least 1 uppercase letter, 
-        1 lowercase letter, and 1 number
-    </p>
-    <p *ngIf="control.errors?.['required']" class="text-red-400">
-        <!-- {{registerForm.get("name")?.errors | json}} -->
-        <!-- a friendlier message -->
-        Please fill the field
-    </p>
-    <p *ngIf="control.errors?.['minlength']" class="text-red-400">
-        <!-- a friendlier message -->
-        The input that you've passed in is {{control.errors?.['minlength'].actualLength}} chars long.
-        Plz type at least {{control.errors?.['minlength'].requiredLength}} chars.
-    </p>
-    <!-- checking for an error for email field -->
-    <p *ngIf="control.errors?.['email']" class="text-red-400">
-        You shall enter a valid email.
-    </p>
-    <!-- checking for an error for age field -->
-    <p *ngIf="control.errors?.['min']" class="text-red-400">
-        Value too low.
-    </p>
-    <p *ngIf="control.errors?.['max']" class="text-red-400">
-        Value too high.
-    </p>
+  <p *ngIf="control.errors?.['pattern']" class="text-red-400">
+    Password must be at least 8 characters, must contain at least 1 uppercase
+    letter, 1 lowercase letter, and 1 number
+  </p>
+  <p *ngIf="control.errors?.['required']" class="text-red-400">
+    <!-- {{registerForm.get("name")?.errors | json}} -->
+    <!-- a friendlier message -->
+    Please fill the field
+  </p>
+  <p *ngIf="control.errors?.['minlength']" class="text-red-400">
+    <!-- a friendlier message -->
+    The input that you've passed in is
+    {{control.errors?.['minlength'].actualLength}} chars long. Plz type at least
+    {{control.errors?.['minlength'].requiredLength}} chars.
+  </p>
+  <!-- checking for an error for email field -->
+  <p *ngIf="control.errors?.['email']" class="text-red-400">
+    You shall enter a valid email.
+  </p>
+  <!-- checking for an error for age field -->
+  <p *ngIf="control.errors?.['min']" class="text-red-400">Value too low.</p>
+  <p *ngIf="control.errors?.['max']" class="text-red-400">Value too high.</p>
+  <p *ngIf="control.errors?.['noMatch']" class="text-red-400">
+    Passwords don't match.
+  </p>
+  <p *ngIf="control.errors?.['emailTaken']" class="text-red-400">
+    Email was taken. Please try to register with another email.
+  </p>
 </ng-container>
