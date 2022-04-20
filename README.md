@@ -6,166 +6,195 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
 
-## Description of the Section 12:
+## Description of the Section 13:
 
-In this section we were working with the routers. We've configured routes for the specific paths and rendered correspondig pages. We've also created separate routing modules, binded some specific data for routes, subscribed to route changes, added dynamic route params for each video uploaded, used query parameters. We also ensured that users will be redirected once they encounter 404 page not found as well as use old routes plus added some route guards to prevent unauthorized page view.
+In this section we were working on drag & drop functionality. Users now can either drag and drop their mp4 files or select them the old way for uploading. Videos are saved in firebase and retrieved when user is in manage page. We also added posting, updating and deleting options for each video from the manage page.
 
-## Topics covered in Section 12:
+## Topics covered in Section 13:
 
-- Intro to angular Router, history API and @angular/router
-- Configuring route
-- router-outlet directive
-- routerLink directive
-- routerLinkActive directive, handling partial url match problem and binding an object of options to the link
-- using --routing flag to generate additional routing module
-- forRoot vs forChild functions
-- navigateByUrl() for redirects
-- adding/binding data to a route with data property
-- subscribing to the events prop of router to listen for changes that router experiences. NavigationEnd event
-- dynamic segments/route params (:routeParamName) and how to retrieve tham with .snapshot.params
-- Query params
-- navigateByUrl vs navigate and [queryParams] prop
-- wildcard path for 404 pages
-- redirecting users from old page url to a new one
-- route guards by angular/fire package
-- using redirectUnauthorizedToHome to redirect an unauthorized user
+- General overview of implementing the drag and drop functionality.
+- Listening for events in the parent element with HostListener
+- some events for drag and drop functionality like dragend, dragover, dragenter, dragleave, mouseleave, drop, drag, dragstart
+- Mime types overview
+- generating unique file names using uuid package and uploading them to firebase
+- firebase storage rules modification
+- percent, last pipes
+- using ref() function for creating a reference to a file
+- firebase's set() & add() function
+- snapshots vs references
+- using disable() and enable() methods on FormGroups to affect the FormControls within
+- adding both drag & drop and input-file file upload methods
+- canceling the uploads once the user navigates away before upload is over
+- making queries to firebase for get, post, update and delete and reflecting them in manage page.
+- using BehaviorSubject with combineLatest()
+- creating composite indexes in firebase storage
 
 ## Notes for the entire Section 12:
 
-### vid.172
+### vid.193
 
-The concept of serving different resources based on the URL is called routing. Routing is handled on the backend. History api is a standartized api in most browsers. We can navigate to different URLs with JS. By doing so browser won't reload the assets. The history.pushState() will update the path in the URL. URLs consist of domain (name.extension) and path. The pushState() allows us to modify the path. This function has 3 args:
-data - data for the new page
-title - ignored by the browsers
-url - path to navigate to
-Note that the history api modifies the url, but it doesn't manage the doc. This task is left to us to handle. Angular ships a separate package for handling the routing called @angular/router. Angular can manage swapping components, updating the url, and monitoring the changes. Under the hood it uses the history api. It doesn't come preinstalled with the default angular package. We can either confirm its installation during the creation of our app or install it manually
+Uploading a file is a shared responsibility between client and a server.
+Client - transfers files to the server
+Server - validate the upload, store the file, giving file permissions, create an API for the client to send the file
+Firebase ships with all the necessary solutions. Uploading files in JS is optional. Uploading a file is 2 step process. 1st we ask the user to upload a file. When files are dropped on the dropbox, it will initiate an upload process. After uploading will present users with some options. Firebase comes with the feature called cloud storage, used for storing user generated content
 
-### vid.173
+### vid.194
 
-Inside the index.html of our app we have the base tag. The value of href attribute is the base path of our app. By def base path is set to the root of our domain and it will change as we navigate through diffrent routes. Configuring the base path could be helpful if you want to isolate your app to a spec path. When we initially created our app we indicated to add routing functionality as well. Check out the app-routing module for the details. Routing must be config from within a module as it can get messy when the project grows. The convention is to name routing module by adding routing to the filename. At the top we're importing RouterModule from the @angular/router package. It will import services, components and directives for adding routing capabilities to an app. Below it we have an array of routes, which contains objects with the config settings for each route. A route refers to a path in our app. This array of routes is annotated with the Routes type, which is exported by the angular's router package. Lastly RouterModule is imported into the app router module. The Router won't become aware about our routes (array) unless we pass them in as an arg to the forRoot function. So by passing the routes array to forRoot function ofRouterModule we are registering all the routes defined within that array. Lastly the RouterModule is exported. We can export the config file by exporting the RouterModule. Note that inside the app module we are importing the AppRoutingModule, and adding it to the imports array. The router will handle the pages in our app. It doesn't handle adding the routes for static asset files. For static asset files we'll let server handle delivery of these files
-
-### vid.174
-
-For every route in our app we need to associate it with a component. Creating a component for the page isn't much different than creating a regular component. You should always consider which sections of your app should be global. Components for pages should focus on the main content of the page, and shouldn't worry about other page sections. Angular doesn't know which template it should render for the specific route, so we must inform it. For Configuring the routing head to app-routing module. Inside the routes array we can add objs with info about each route. 1st prop in the object that we pass to routes array would be path prop, to which we assign a string of relative URL path. As angular prefixes our paths with a base path it's redundant to add / at the beginning of our paths. Next add component prop that should receive a component object that we have created separately for this route. Import the corresponding component and assign it to component prop. Finally we need to indicate where that component should be inserted in the app component. For that we should use router-outlet directive, which acts as a placeholder for our components. Once the router has been initialized this directive will load the component for the corresponding path
-
-### vid.175
-
-Exercise for creating about page
-
-### vid.176
-
-One solution for adding links to an app is through anchor elements href attribute, but this will make page to refresh and the user must download again page resources on each navigation. The Routing module exports a directive for handling a navigation between pages that handles this problem. Swap the href attribute with the routerLink directive. Under the hood Angular is using a History api. We can go back and forth between pages.
-
-### vid.177
-
-routerLinkActive directive will apply a class to an element if the path is active. This will check if the routerLink directive is applied on the same element, if so the path passed to the routerLink will be compared with the path on the URL. A class is applied on the element if there is a match. The desired className can be assigned/passed to the routerLinkActive. In some cases we may need to apply classes to the parent element of the link the routerLinkActive directive can be applied to the parent elements of links. If the routerLinkActive direct. can't find the routerLink directive it'll search for this directive on the child element, so we can apply it directly on the anchor or parent element. Attaching dynamic elements is easy, but there is a common flow that we should be aware of. Active classes may get attached to elements that don't have exact match. By def. routerLinkActive directive will perform a partial match, meaning that if the link partially matches the path in the address bar Angular will consider it as a match. Every path contains a /, therefore Angular will consider every link that points to the home page to be active. We can override this behavior by binding an object of options to the link. Directives can have props decorated with the input decorator. This implies that we can pass additional vals to the directives. If we set the exact: true, Angular will enforce exact matching. For this we can use [routerLinkActiveOptions] property binding
-// EX.
-[routerLinkActiveOptions]="{ exact: true }"
-Always be aware of this when matching the links
-
-### vid.178
-
-Along with generating a module we should generate a routing module. It's perfectly acceptable to have multiple routing modules under one app. Angular CLI has an option for generating modules with an additional routing module using --routing flag
-// EX.
-ng g module Video --routing
-Two files should be generated after running this command. An ordinary module file and routing module file. In the routing module file we have the exact same configurations that we had in app-routing module. The biggest difference is how the module is imported. In this case routing module is imported with the forChild function, which is completely different from the forRoot function used in app-routing module. forRoot function will register a service called Router, a service for interacting with the router in our app. The forChild function on the other hand doesn't register this service. There is no point in registering the service if it's already registered. In most cases we should call the forRoot function only once. For other routes use the forChild function. Don't forget to register other modules inside the app.module by importing them and adding them to imports array. As we import the child module we don't need to import its routing module separately as it comes already imported within that module. Angular gives us the separation of concerns by allowing us to structure our routes in different modules.
-
-### vid.179
-
-In some cases we may need to redirect the user after our app has performed an action. We can force the redirection by injecting the router. The Router class can be injected in our app after we've impoter the Router module. We can interact with the router by calling the methods provided by this class. The method we're interested in is called navigateByUrl(), which is the simplest method that can be used for redirecting the user. It accepts 2 params: url to which the user should be redirected to and extras optional object of additional settings. It returns a promise that resolves to a boolean value. First import the Router class and inject it in the constructor function of the given component. The router can be configured to work with an absolute or relative paths. An absolute path will redirect the user to the new path relative to the base path of our app, whereas a relative path gets appended to the current route
-
-### vid.180
-
-It's common to refactor the code as you're building an app. Here we're refactoring the logout function by moving it to auth service. We outsource the logic and functionality into a service for convenience and reusability
-
-### vid.181
-
-Data can be associated with the route. The data we add to the route can be helpful for adding additional info about a route. In the object for settings that we add to routes array for each route we can add a prop called data and assing it an object with some static data to be added to the route. This data will be exposed to the other areas of our app by the router's services. For ex we can specify whether this route requires the auth, by adding the authOnly: true prop. The ActivatedRoute is a service we can inject into our components to gather the info about the route the user's currently on; not to be confused with the router service which provides the methods for interacting with the router. We can subscribe to its data prop, which stores an observable that pushes the data from the current route. We can subscribe to this observable to grab the data added to our route. The router doesn't make the data easily accessable to services or components defined outside the routerOutlet directive. Keep in mind that the routerOutlet directive will manage the components for a route. Components managed by this directive will be given the latest changes to a route. The story is different from outside the directive.
-
-### vid.182
-
-As mentioned before, router doesn't provide us with the data from the route, as our service is outside the router-outlet directive. Throughout the lifetime of our app, the Router emmits events whenever the user navigates around the app. Events can be emmited by the user's actions or when we force them to navigate. During these events we can access the info about the current route. We can solve our issue by listening to these events. We can subscribe to the events prop of router to listen for changes that router experiences. There are multiple events being emmited. The NavigationEnd event is emmited when the router has finished navigating to a route. After this event has been emmited, we can attemt to retrieve a data related to the current route. Import that event class. router.events observable will emmit several events. We aren't interested in handling every single event. Unfortunately angular doesn't provide a way to listen to a specific event. Since the events prop is an observable we can use operators (filter) to listen to a specific event.
-// EX.
-filter(e => e instanceof NavigationEnd)
-
-### vid.183
-
-As mentioned angular doesn't make it easy to retrieve data outside of the outlet. One trick to get the data is through angulars events. After filtering the event for NavigationEnd we can start grabbing the data. The activatedRoute service will store the info about the current route as mentioned earlier. From tis service we can grab the firstChild prop. Initially Router creates a tree of routes. It's possible to create routes from within a route. As a result we'll get a nested tree of routes. The activatedRoute service will return the entire tree of routes. We aren't interested in the entire list of routes. By accessing the firstChild we access the 1st child in the tree. We'll be returned another instance of an ActivatedRoute object. The tree mentioned before is a tree of ActivatedRoute objects. We can subscribe to the data observable in this object to gather the data about the route, in our case using switchMap flattening operator. Nullish coallesing oper. will check if the val on the left is null or undefined. If val isn't empty the operator will return the value otherwise it'll return the value on the right of the operator.
-// EX.
-map((e) => this.route.firstChild),
-switchMap((route) => route?.data ?? of({}))
-
-### vid.184
-
-Creating a path to upload page, for uploading the videos
-
-### vid.185
-
-We need to assign unique routes for each video clip uploaded by the user. Instead of assigning route for each video, we can generate one route to handle all clips. Paths can have dynamic segments. Angular supports dynamic segments called route params, so we can render the video based on the URL. Action of managing and uploading videos would be a separate module. When we prefix the name of a segment with a :routeParamName Angular will interpret this as a route param, which is a placeholder for any val. We'll reference to the param by :routeParamName. To retrieve the route param value we can use ActivatedRoute. We can grab the info about the current route through the snapshot obj. Inside this obj params are stored inside params obj, where we can have multiple route params. We can reference to the param by its name.
+Most browsers will load the file in the browser depending on the file type. This behavior will move them away from the app. We should prevent this behavior of the browser before proceeding with the upload. Preventing the behavior of the browser can be outsourced to a custom directive. Generate a new directive with the ng g directive <directiveName> command. If we want this directive to be useable in other modules we have to add it to experts array manually, and import it in other modules.
+Directives are defined as classes decorated with the Directive decorator. We can pass in an obj to configure the directive. Selector indicates the name of the directive. We can inject services into directives through the constructor function. Usually we have to add an Injectable decorator to a class. We can avoid adding it, as Directive decorator will allow the class to be injected with the services. A host element refers to an element to which the Directive is attached to. Angular exports decorators for helping us access the host element. The HostListener decorator performs 2 actions. It'll select the host element, and listen for an event on the host. This decorator has two args, name of the event, in our case "drop". drop event can be triggered when the user releases their mouse or by pressing the escape key. After listening for this event we need to pass an event object from the element to our function. 2nd arg is an array of vals to pass on to the function. drop event isn't the only one that can cause the file to be oppened by the browser. There is another event called dragover, which is emmited when a selection is dragged over an element. This event can cause the file to be oppened. We have to prevent this behavior. We can apply HostListener twice to the event handling function. We aren't limited to a single decorator. Multiple decorators can be applied to a single method, even the same decorator
 // EX.
 
 ```
-constructor(public route: ActivatedRoute) {}
-
-  ngOnInit(): void {
-    this.id = this.route.snapshot.params['id'];
+@HostListener('drop', ['$event'])
+  @HostListener('dragover', ['$event'])
+  public handleEvent(event: Event) {
+    event.preventDefault();
   }
 ```
 
-### vid.186
+Now we can apply the selector of this directive to an element to add this functionality.
+// EX.
 
-Whenever we navigate to a different pages Angular will destroy the component of the previous route. Angular will notice when we're directing ourselves to the same page. It won't destroy a component if it's the same component. This behavior works great for the user, but on the other hand we need to grab the route param. Angular provides two ways to grab info related to a route. We can grab info from the snapshot obj. Snapshots repres the route in a moment in time, and doesn't get updated after we inject the service. It's not great when we need to constantly grab the route's info at different moments in time. Angular exposes observables to listen for changes on route (route.params). The params prop is an observable, which will push values whenever route's params have been changed, so we can subscribe to it.
+<div app-event-blocker>...</div>
 
-### vid.187
+Whenever we're dealing with events we should always try to stop the default behavior.
+We have created a reusable directive. If we need to support other events, we can add multiple host listener decorators to our methods.
 
-Query params are powerful bec. they allow us to stay on a resource without updating the entire page. We can add them to our routes to filter and sort through the data on a page; the key=value pairs 1st query placed after ? sign and subsequent ones after & sign joined together on the URL. The HTMLSelectElement type is def. by TS. We've freedom over the names of our query params, but generally if you're creating an API, the query params should have readable and concise names. Similar to our routes data the router will expose an observable for the routes params. We can subscribe to it for changes on the route. By def HTML elements will typecast an input's val as a str. Vals pushed by the observable will contain the latest vals from the query param. We can access them by their keyName. Typically we'll unsubscribe from the observable, however Angular will complete the observable when the component is destroyed. The router destroyes the component when the user navigates to a different page.
+### vid.195
 
-### vid.188
+We need to highlight the dropbox when the user drags file over the upload box. We have to apply some event listeners to that box like:
+dragend - element is no longer being dragged on
+dragover - element/selection is being dragged on the element
+dragenter - when smth is being dragged on the element
+dragleave - when wmth that prev was being dragged is no longer dragged
+mouseleave - when mouse is no longer being hovered on the element
+drop - when smth is being dropped on the element
+Other useful events migh be:
+drag - when the element this event is applied to is being dragged
+dragstart - when the element started to be dragged
 
-There are other ways for adding queries params. Intead of navigateByUrl we can use navigate method. navigateByUrl is the simpler one, which accepts a path as a string to redirect user to. The navigate method is more complex and powerful, which allows to customize the behavior of the router. 1st arg is an array of paths. We can construct a path by passing each segment separately as a stringto that array, and the URL will be constructed based on these values. By def the path is absolute. We can overwrite this by passing the 2nd arg, an object, to the navigate function, which contains a configuration settings for the router. The property relativeTo will allow us to change path from absolute to a relative, The value we path to it should be an instance of ActivatedRoute and this is the value relative to which we should change the path. We can add query parameters by adding queryParams prop to the same config obj. Its value should be an obj of query params you want to set (key:value pairs). Router will convert this obj to a string, which in turn would be appended to the URL. Query params can also be added to the routerLink directive. We may want to config the query param from the beginning. The [queryParams] prop is a part of the routerLink directive. We can add query params through this prop. The value to this prop must be an obj. The routerLink directive will convert the object to a string and append the query to the url.
-Path params - should be used for returning a single resource or multiple resources
-Query params - should be used for sorting/filtering through data
+### vid.196
 
-### vid.189
+Chrome won't log the files unless you access the files directly. Under the DragEvent obj ->dataTransfer -> files you won't be able to see the dropped files to the dropbox. If you're trying debug the drag & drop operations you need to access the props directly to see their vals. Simply logging the object will result in an empty array.
+// EX.
+($event as DragEvent).dataTransfer?.files.item(0) ?? null;
+A mime type is a lable to identify the type of data in a file, similar to extensions except that they can't be changed easily. It's more practical to check for file's mime type rather than extension. Mime types are broken into 2 parts, type/subtype
 
-For dropdown selected value persistence after the refresh instead of ngModel directive we can bind the selected option
+### vid.197
 
-### vid.190
+setValue() function will programmatically update a formControl's val. We don't always have to wait for a user to input a val.
 
-Angular doesn't auto handle invalid routes, so we should redirect the users when this situation occures. We can handle the unknown paths by creating a wildcard path.
+### vid.198
+
+Handling the form under the dropbox once an mp4 file gets uploaded.
+
+### vid.199
+
+Firebase offers a service for hosting uploaded files from users. We use angular/fire package to communicate with the firebase. It comes with a module that exports services for interacting with the Firebase's cloud storage. We can use AngularFireStorage for that purpose. We can indicate the path to which our data should be passed in the Firebase. We can indicate the dir under which the files should be added and if there is no such dir it would be created auto. Note that Firebase won't check the contents of the duplicate named files, so it will overwrite the prev one with the most recent one. Firebase doesn't provide any solution for this issue, so we have to tackle it by creating unique named files. We can use the uuid package for that. We can also download @types/uuid for data types required by TS. We can use this.storage.upload() function for uploading data to firebase. It accepts 2 args, name of the file and the file obj
+
+### vid.200
+
+Going through the storage rules in Firebase. Don't forget to change default read and write rules, otherwise users won't be able to upload their videos to firebase.
+// EX.
+allow read: if true;
+allow write: if request.auth != null
+&& request.resource.contentType == 'video/mp4'
+&& request.resource.size < 10 _ 1000 _ 1000;
+Firebase has a function for checking multiple types if they're in a similar category, called matches()
+
+### vid.201
+
+Along with displaying the alert component the form should be disabled to prevent duplicate uploads.
+
+### vid.202
+
+We want to be able to let the user know if their upload is in progress, a success, or a failure. upload() function from the storage service returns an object with observables. This observables will push data related to the upload including the progress of the upload. We can save that observable in a var and immediately subscribe to it using percentageChanges().subscribe(). Angular ships a pipe for formatting the % values called percent. Note that this percent pipe will multiply the val by 100 so divide the val by 100 to reverse the changes.
+
+### vid.203
+
+If the upload fails we should update the error message to inform the user, and give him/her a chance to resubmit the video, otherwise show the success message.
+A snapshot represents the current status of an upload. Similar to percentageChanges observable, but the main difference is the type of info pushed by the observable. Firebase will inform us with the bytesTransfered and totalBytes, so we can calculate the % of the upload. We can check the status prop of the last snapshot returned to us to check for upload status. We can use the last pipe for that purpose.
+
+### vid.204
+
+Note that we have to store the id of the user and the title of the uploaded video in the DB. Info about the user can be retrieve through the authService. The URL isn't easily accessable unless we create a reference. Only after that we can retrive the info about the file. Creating a reference is a separate action. The ref() function will create a ref to a file. After grabbing the ref we can access the public URL of the file. getDownloadURL() returns an observable
+
+### vid.205
+
+Interacting with clips in DB would be a common action in our app. We should create a separate service for that. We can constrain the data of our collection to a specific structure. import AngularFirestore for communication with the firebase, and AngularFirestoreCollection for structuring. We can use the collection() function to select the collection from our db. There are 2 methods for adding a document to a collection, the set() function we used to add the user to a collection and the add(). The difference is that the set() will allow us to assign a custom id to the doc. The add function will instruct the firebase to generate an id for us.
+
+### vid.206
+
+A reference is an obj pointing to a location in yur app. By pointing to a location we can read/write references. Refer. allow us to create other new references as well, enabling us to manage multiple locations.
+Snapshot is an obj that is a copy of a location in your app. They're read-only and immutable. Whenever we make a change to the app, it's typical for firebase to respond with a snapshot. Snapshots make your app light-weight making your app faster. You can't create snapshots directly, but created for you during the events.
+
+### vid.207
+
+We should prevent the users from interacting with the upload form during the upload process. We can disable the entire form during that process. FormGroups and Controls can be disabled. For groups the entire set of controls are disabled. disable() function is available in all Groups and Controls. The enable() function performs the opposite action of the disable. It will enable the controlls from within a group.
+
+### vid.208
+
+Some most used versions of older mobile browsers don't support the drag & drop functionality. In this case we can use file-upload method. Place both dragand drop container and input(file) in an ng-container by adding the ngIf directive to show and hide that. Note that files uploaded by the input element are stored in a different location than drop events. They're stored under target -> files and note that we don't have the dataTransfer prop here. We should also ensure that we grab file from the correct place.
 // EX.
 
 ```
-{
-    path: '**',
-    component: NotFoundComponent,
-},
+this.file = ($event as DragEvent).dataTransfer
+  ? ($event as DragEvent).dataTransfer?.files.item(0) ?? null
+  : ($event.target as HTMLInputElement).files?.item(0) ?? null;
 ```
 
-During the navigation process Angular will run path against the routes registered in our app. The moment it finds a match, it'll render a component related to the path. There occures a problem when the user heads to an invalid path and tries to get back to a valid one by navigation link. The not found page persists and no new page is rendered. This is a common problem. The reason the router renders not found component has to do with the order of routes registered in our app. Angular chooses to render components on a 1st come 1st served basis. We should place the wildcard route at the end, or otherwise not found page would always be rendered. Place the AppRoutingModule at the end of imports array in app module file so that it won't interrupt with other import modules.
+### vid.209
 
-### vid.191
+When you navigate to another page the component from the prev page gets destroyed. This applies to its children components as well. If the user navigates away from the upload page, we should cancel the request. We can use destroy lifecycle event for this purpose. During this lifecycle function we're going to cancel the upload before the component is removed from the doc. Uploads can be canceled from the task obj. Calling the cancel() function will stop upload operations to firebase.
 
-As mentioned before we can redirect users to another route with routerLink directive or a set of functions. Browsers are capable of remembering the urls you visit. It's possible that prev url was saved in the browsers history. Our browser might recommend some prev. visited pages. We can handle the issue of old path getting recommended to a users who has previously visited it in two different ways. We can show the 404 page or redirect the user to a new path. The later solution is prefered when you're sure which path user intended to use. Add an object for that old route in the router array and then use redirectTo: "newPath" proprety. No need to use the component prop here.
-// EX.
+### vid.210
 
-```
-{
-    path: 'manage-clips',
-    redirectTo: 'manage',
-  },
-```
+The route param in the URL is the most important info in the video page. As every document in firebase stores a unique id we can use that id to render the corresponding video page
 
-### vid.192
+### vid.211
 
-Users shouldn't be able to access spec routes based on their auth status. Currently users can navigate to pages using URL without any auth. Angulars routing library intoduces a solution for protecting the routes called guards, which are the functions that would run before the navigation is performed. They have the final say before the navigation. We can tell the router to reject the request. We can manually create a guard but angular/fire package already exports guards for checking the users auth status. We can use them to reject the autorisation to a specific route. 1st import AngularFireAuthGuard in the corresponding routing module. Next add the canActivate prop to the given route object in routes array, which accepts an array of guards to be run when the route is accessed.
-// EX.
-canActivate: [AngularFireAuthGuard]
-We can modify the guards from the angular/fire package. We can use RxJS pipes to modify the behavior. We can import redirectUnauthorizedTo pipe, which will redirect the user to a page if they aren't auth to visit the route. When we add this pipe to our guard, we must pass a function that returns the pipe, which has 1 arg, the path to redirect user to. Next we can apply this pipe to the guard by adding it as a data prop. If this data prop is present in the route the guard will run the pipe function. It will only run if the guard rejects the req
-// EX.
-const redirectUnauthorizedToHome = () => redirectUnauthorizedTo('/');
-and
-data: {
-authOnly: true,
-authGuardPipe: redirectUnauthorizedToHome,
-},
+Creating a timestamp requires the firebase object. firebase package ships with a function for generating a timestamp compatible with our DB, called firebase.firestore.FieldValue.serverTimestamp. Every service offered by firebase can be found under a specific object
+
+### vid.212
+
+The id of the user can be retrieved through the authService. where() method creates and returns a new Query with the additional filter that documents must contain the specified field and the value should satisfy the relation constraint provided. We can create a condition to check if a prop matches a val. We can pass in 3 args for creating the condition. We have to create a condition for checking if the user id in a doc matches the id of the user logged in. Pass name of the doc, comparison operator and value to compare to. This will generate a query instructing the firebase to search through the docs in the clips collection. Lastly, we have to initiate the query with the get function. Note that the query result would be the QuerySnapshot obj with some props, the most useful of which is the docs, which will return the array of uploaded videos by the given user.
+
+### vid.213
+
+Grabbing the videos for the corresponding user.
+
+### vid.214
+
+We should show user all the available videos he/she has uploaded. Do it using ngFor directive, by looping through all the received videos in the array.
+
+### vid.215
+
+We should give the options to a user to edit their videos. Reminding that modal component will project the content passed to it. Every modal should have a unique id. Along with it we need to register our modals. When the user clicks on the edit button modal will be updated to contain the values from a specific clip
+
+### vid.216
+
+By keeping track of the current clip we can update the form accordingly
+
+### vid.217
+
+Angular manages to update the prop, but what if we want to be notified of changes to the components input props. Components have a lifecycle function to watch for changes, called OnChanges. This interface will force our component to define a method called ngOnChanges, which will be called whenever a components props are updated by a parent component. We can use this method to update our form controls when the active clip prop is modified. FormControls expose a method called setValue to update a formControl's value, as mentioned before. The control can be passed down to the component by binding the control prop to the title prop
+
+### vid.218
+
+We have learned how to insert and select data in firebase. Updating data won't be too different. This req should be initiated by our service. This way our components can update the clips. The doc() function allows you to select the doc by its id. The doc function will return an obj where we can access its data. In addition we have access to functions for interacting with the doc. The update() function will allow us to update any of the props inside of it. If we ommit a prop, firebase won't change its val. We can even add additional props.
+
+### vid.219
+
+As the user updates the title of his/her videos the update reqs are sent to the db, but the visual update of the manage page doesn't occure. We should listen for the changes from the parent component and reflect them to the child manage component. Use the Output & EventEmitter decorators + emit() function for that. Then on the child element selector tag use the (update) event listener and pass a function with $event for handling the update defined in the component class file. $event won't hold the simple data, but the data passed from the child element, so better annotate it
+
+### vid.220
+
+When removing the video from firebase we should remove the video from the storage and the document with the necessary info from the DB. A reference is an obj, that points to a specific file, and has methods and props for interacting with the file. Use ref() with the delete() method to delete the file. Note that deletion is considered a part of writing process in firebase, so the rules applied to write are applied to delete as well, unless you define it separately. The next step would be to delete the data from the collection. We need to select the doc for interaction with it. After selecting the document with doc() function we can call delete() function to delete that doc. Finally we should reflect this change instantly in the manage page. We can remove the deleted video from the view using the splice method.
+
+### vid.221
+
+Normally we can subscribe to an observables to wait for values pushed by the observable. Subscribers don't have the power to force the observable to push a new val. This isn't true for the behavior subjects. A subject can push a val while being subscribed to an observable. We can create an obj that acts like an observable and observer. Unlike other observables BehaviorSubject can be created with an operator. We must use it to instantiate an observable. Remember that $ is appended to props to identify the observables. A BehaviorSubject must specify the type of a val pushed to an observable with the generic. We need to pass an initial value to be pushed by the observable. Just like any other observable, we can subscribe to BehaviorSubject. combineLatest operator helps us with subscribing to multiple observables. Note that observables should be passed within an array to combineLatest. Whenever either observable pushes a value the combineLatest operator will push the val on to the pipeline. Along with the new val, vals from other observables will get pushed too. The vals will be the latest value from the other observables, therefore we'll receive values from each observable
+
+### vid.222
+
+An index tells the db how to sort a field in a DB. Firebase will auto create indexes for your data. An index is created for each prop in a doc. Firebase doesn't know how to sort UID or timestamp of videos. We can teach that to firebase. Head to firestore db -> indexes. Indexes are placed in 2 places. Composite and single field. Composite indexes are for teaching firebase how to sort data with multiple props.
