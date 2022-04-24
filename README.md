@@ -6,116 +6,119 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
 
-## Description of the Section 15:
+## Description of the Section 16:
 
-In this section we were mainly working ffmpeg and webassembly. We added the functionality of taking snapshots from the uploaded videos and presenting them to users to be selected. We have touched a topic of sharedArrayBuffer, converting video snapshots to a binary and BLOB URLs and bypassing the Angular DOM sanitization. We also touched a topic of adding headers to reqs in angular.json.
+In this section we were mainly working on proper video content representation. We have used the infinite scrolling feature to load new videos each time user scrolls to the bottom of the page. We added the necessary player buttons to selected video using video.js framework, copying feature to clipboard and lazy loading for the necessary videos only.
 
-## Topics covered in Section 15:
+## Topics covered in Section 16:
 
-- Intro to ffmpeg + ffmpeg.wasm pack
-- Configuring settings for different commands under the architect option in angular.json file
-- Intro to web workers and sharedArrayBuffer
-- Enabling sharedArrayBuffer by adding Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy to the headers of reqs
-- Writing video files in ffmpeg separate memo by converting them to binary first
-- Running webassembly version of ffmpeg instead of CLI commands
-- Converting binary snapshot of a video to a BLOB URL to be rendered by a browser
-- genarating a separate pipe with ng g pipe command
-- using DomSanitizer class and bypassSecurityTrustUrl function to bypass Angular's sanitization
-- fetching file from a blob instead of a api url using fetch()
-- using combineLatest, forkJoin operators
+- Application of Infinite scrolling
+- What are CORS, Same-origin & Cross-origin policies, crossorigin attribute
+- Creating cors.json file and communicating with google cloud services using gsutil
+- Integrating and using Video.js framework for videos
+- Using Clipboard API for copying video links to user's clipboard
+- Lazy loading the video files using wabpack's chunk feature
 
-## Notes for the entire Section 15:
+## Notes for the entire Section 16:
 
-### vid.249
+### vid.267
 
-Generating a screenshot from a vid can be considered as an intensive task. While it's possible to create screenshots with JS, it would be much faster with web assembly. ffmpeg is a cross platform tool for processing video and audio files. We can interact with it through a cli just like in angular. This tool should be converted to a web assembly file. We have an option of doing it manually, but there is already a library in github repo called ffmpeg.wasm which we can use for our project.
+Infinite scrolling is highly popular solution for browsing through data
 
-### vid.250
+### vid.268
 
-ffmpeg is split into 2 packages, Core - ffmpeg tool converted into webassembly, and FFmpeg - a JS api for interacting with the core.
-1st we need to install @ffmpeg/ffmpeg @ffmpeg/core packs.
-Next we should install the @types/node to be able to use the types of node in typescript. We should add them to TS in the tsconfig.app.json under the compilerOptions prop.
+On home page we should listen for scroll events and when user reaches the end of a page we should load new video contents.
+
+### vid.269
+
+As mentioned earlier, components get destroyed when a user navigates to a different page. We can use a lifecycle function to destroy the scroll event. Removing an eventlistener is always an important step if you're working with an event system outside of Angular. If the innerHeight + scrollTop prop vals = offsetHeight we can start loading new videos
+
+### vid.270
+
+We should grab the latest uploaded video files from firebase and limit them to a specific amount using limit() funtion, otherwise firebase will return all the videos from the DB. On subsequent requests we should tell firebase not to grab the same videos. We have a funtion defined in firebase for getting next batch.
+
+### vid.271
+
+We should grab the videos from the DB at the very beginning when the app is loaded and each time when the user scrolls to the bottom of the page
+
+### vid.272
+
+A resource can be considered videos, imgs, fonts, web pages, general asset files. Req a resource can be dangerous, like downloading a mallicious resource. Browsers introduced policies called cross-origin-resource-sharing (cors). Browsers allow sites to download resources from the same site, known as Same-origin policy. On the other hand when site A wants to download resources from site B we have the situation of downloading resources from different servers or origins, known as Cross-origin policy. Most browsers will allow including images without any problem. In the angular.json file we added Cross-Origin-Embedded-Policy: require-corp, which enforces stricter standars on our app. It won't allow our app to load cross-origin resources without permission. It's easy to add headers to our dev server, but this time we need to add headers to firebase's servers. We can give a permission by adding the following headers:
+Access-Control-Allow-Origin: \*
+or more specifically
+Access-Control-Allow-Origin: example.com
+
+### vid.273
+
+The crossorigin attribute will inform the browser of the resource located at an external resource. We need to add this attribute to the element tag whenever we're trying to retrieve resources on cross origins. As firebase is owned by google, fireapp's data is stored on google clouds infrastructure. Think of firebase as an additional layer. Adding headers isn't configurable through firebase. We must handle it from our google cloud account. Google cloud's platform can read the cors.json file for config its cross origin settings. Create that file in the root dir, and add an array of object for config options.
 // EX.
-"types": ["node"]
 
-### vid.251
+```
+[{
+"origin": ["*"],
+"responseHeader": ["Content-Type"],
+"method": ["GET"],
+"maxAgeSeconds": 3600
+}]
+```
 
-One of the jobs of ffmpeg pack is to import the core package. We don't need to manually import it. It's a convenient feature but the problem is that files are loaded through http, and aren't bundled with our project. Angular provides a dev server for delivering files via the local server. By def files in the node_modules dir aren't publicly accessable through http. If we don't expose these files via http URL the ffmpeg pack won't be functional. Angular can be configured to deliver additional asset files. The architect option in angular.json file is an object of config settings for different commands of angular. We can config a specific command to modify the behav of that command. Add the following under the architect:
+After the config. the last step is to upload that file to google cloud. gsutil is a python program for communicating with the google cloud services through the CLI. We can use this tool to upload our config file. Install it to your system first. Now to upload the cors.json run the following command: gsutil cors set cors.json <linkToFirebaseStorage>. DON'T FORGET TO LOG IN TO YOUR ACCOUNT WITH GSUTIL AND GIVE IT AN ACCESS PERMISSION, using gcloud auth login first.
+
+### vid.274
+
+Pipes can be created with the ng g pipe command. The @Pipe decorator will tell the Angular to register our class as a pipe. The PipeTransform interface will force our class to define a method called transform, which is called by the angular when we add the pipe to an expression. Pipes aren't injectable. We can make their class injectable by registering them in a component class for module. By injecting our pipe to a component class it would be available to all modules that use that component. The toDate function would convert the timestamp into a date obj. The date pipe is a very common type of pipe to use, but there are cases when you can have an incompatible val. Rather than recreating the Date pipe you can create a custom pipe to act as a layer between the val and a date pipe
+
+### vid.275
+
+Video.js is a framework built on top of a browser's html5 video player. There are 2 big benefits for using this library. 1st video players can have their appearence customized. 2nd there are numerous plugins to extend the def behavior. 1st install it by running:
+npm i video.js @types/video.js @videojs/themes
+
+### vid.276
+
+The video element should be exposed to a component class. By def angular doesn't expose elements to the class. We need to manually query the template for an element. There is a decorator for this spec. situation. 1st add the #templateVar to an element we want to select. The @ViewChild() target will perform a query on the template. With this decorator we can select components, directives, and regular html elements. If we're selecting an html element it should have templateVar. Whenever we're selecting elems with the ViewChild decorator, the prop will store an instance of an ElementRef class.
+The ngOnInit function has an access to the template however we aren't guaranteed that the template is ready. If we try to access an element inside a loop or condition it may not be easily accessable. For this reason props decorated with the ViewChild decorator should be accessed from ngAfterInit function. The ViewChild decorator has the 2nd arg, an obj with some options. By setting static prop in that obj to true the viewchild decorator will update the prop with the element before the ngOnInit function is called
+
+### vid.277
+
+The videojs function will help us with creating a player, but before creating it we need to create a prop for storing the player instance
+
+### vid.278
+
+To import the core styles for videojs player and themes add:
+@import "~video.js/dist/video-js.css";
+@import "~@videojs/themes/dist/forest/index.css";
+to the corresponding components stylesheet file, where the video is displayed + additional custom css styles.
+As noted earlier, behind the scenes Angular will encapsulate CSS to a single component by adding some unique ids. This feature isn't always reliable. Some CSS can't be perfectly encapsulated. We can disable the view encapsulation by configuring the component's options. 1st import the ViewEncapsulation enumerator. Enumerators are spec type of obj for storing a list of vals, which restrict the elements to a specific type.
+Passing encapsulation: ViewEncapsulation.None, to Component decorator will disable the encapsulation. By removing the encapsulation Angular won't fiddle our styles. It was causing an issue with our player's functionality.
+
+### vid.279
+
+Working with media can be tricky. Videos come in various shapes and sizes. The width and height need to maintain a consistent aspect ratio. There is a Tailwind plugin for generating classes to add an aspect ratio into an element, called @tailwindcss/aspect-ratio. Note that tailwind 3.x ships with a spec class for aspect ratios, but safari doesn't support that, so better use this plugin instead. Next load this plugin by reuiring it under the plugins in tailwind.config.js. Now we have access to preset classes that we can apply to videos. Use 16x9 aspect ratio
+
+### vid.280
+
+We need to dynamically render a different video based on the url. A resolver is a function for retrieving a data for page component. The Router will run this function before loading the component. The 1st step is to implement the interface, using the Resolve class. The ActivatedRouteSnapshot class will store the info on the current route being visited. We can use it to access routes params. RouterStateSnapshot class will store the current repres. of our routes in a tree. By def resolvers aren't auto registered with a route. We must manually register a resolver. Inside an object for defining a route we can add the resolve prop, which is an obj of resolvers. Angular will search for a function called resolve in our service and if it's available it will be called whenever a user visits this route. The data returned by the resolver function can be accessed through the prop's name in this obj
+
+### vid.281
+
+The date pipe isn't injectable in our component, but we can make it injectable by adding it to the providers array.
+
+### vid.283
+
+Copying the video link to user's clipboard will provide a better user experience. There are 2 APIs for copying data to the clipboard, Clipboard API and the execCommand. 1st one is more modern approach and the later one is tradittionally used to copy the content to the user's clipboard (DEPRECATED). The location obj is def by the browser. It contains the info on the current location of the browser. location.origin will return us the base url. Clipboards can be accessed through the navigator.clipboard obj and the writeText() function called on it will add the text to the user's clipboard.
+
+### vid.284
+
+We should only load the code the user needs right now. Lazy loading is a feature for addressing this problem. We can break our app into chunks. Processing an app is done with the webpack. Angular cli configures it for us. The idea of a chunk is webpack's feature, which describes pieces of your app. By def webpack bundles your app to as few files as possible. We can overwrite this behav by manually telling the webpack to keep a chunk out of the bundle while at the same time load the chunk when it's needed. So the file gets downloaed when we instruct webpack to do so. We can lazy load entire video module when the user visits the manage or upload pages. Inside an object for a route we need to define a path with an empty string val and a loadChildren prop, instead of the component prop, which can be used to load a module dynamically, so we have to pass an async function to it. We can directly import a module in that async function with the import function.
+Webpack isn't aware of types and vals exported by a module. We need to explicitly tell webpack where to find a module class
 // EX.
+
+```
 {
-"input": "node_modules/@ffmpeg/core/dist",
-"output": "node_modules/@ffmpeg/core/dist",
-"glob": "\*"
-}
-Internally angular installs node-glob pack for searching through folders. It's a pack for searching files with patterns
+    path: '',
+    loadChildren: async () =>
+        (await import('./video/video.module')).VideoModule,
+},
+```
 
-### vid.252
-
-JS runs on 1 main thread. To handle the intensive, and demanding apps browsers use web workers, that are scripts running on a different thread than the main app. Web worker doesn't have access to doc. If it needs to send data to a main thread a message must be posted. Sending large data between web worker and main thread can freeze the app. A newer approach was to add sharedArrayBuffer, which is an obj shared between the main thread and web workers. Scripts from different threads can read and write to the same obj. If we insert large data to the shared buffer obj our app won't freeze. Browsers turn this feature off by def. After its intro a flaw was discovered leading to data hacks of different client browsers, fortunately it was fixed; still sensitive option. To enable the sharedArrayBuffers we need to add headers to the responses from our app, inside the angular.json. Under the serve command add the options prop which is an obj, to which we should pass a headers option. As we know html docs have head and body sections. The head sections describes the doc/metadata and body for representing data. This separation info can be applied to reqs and resps. Whenever we perform a req, browsers will split the req into 2 categories, header & body. Same is true when servers send responses. A request header is created by a browser and the response headers by the server. Angualr's dev server add response headers auto. If we need to enable SharedArrayBuffer feature additional features need to be added, therefore we need to configure the server. Browsers are expecting 2 headers:
-"Cross-Origin-Opener-Policy": "same-origin",
-"Cross-Origin-Embedder-Policy": "require-corp",
-By adding these headers browsers will enable the sharedArrayBuffers feature which is required by the ffmpeg pack.
-
-### vid.253
-
-We need to add ffmpeg to a separate service as it's a large pack. The createFFmpeg() function will return a new instance of an ffmpeg class. It will log errors if any. createFFmpeg creates an instance but doesn't load webassebly file. To load the ffmpeg use load() function on the ffmpeg instance.
-
-### vid.254
-
-While ffmpeg pack is being downloaded we should prevent users from uploading the videos.
-
-### vid.255
-
-Internally ffmpeg will create a separate storage for files. Without separ memo storage system loading files, especially video ones, can cause our app to lag. Generating the screen shots will require storing the user's upload in memo. We have to first convert videos to binary before storing them as we did with imgs in mini project. ffmpeg's fetchFile helper function will help us to convert file to a binary representation. Storing the data in memo isn't performed by this function. FS() function (file system), gives us access to the pack's independent memo system. We can read and write files to this system.
-// EX.
-const data = await fetchFile(file);
-this.ffmpeg.FS('writeFile', file.name, data);
-After successful upload of a video ffmpeg will log a small info about the upload indicating that the file was successfully written to the memo.
-
-### vid.256
-
-After saving the video files in memo we can start to generate screenshots. ffmpeg comes with 3 tools. 1st is ffmpeg itself, which will process video and audio files. This is the tool for generating shcreenshots. 2nd is ffplay which is a tool for playing the media files. 3rd is the ffprobe, which can read files but can't process them; userful for reading metadata from the file.
-Regardless of what you're trying to do ffmpeg is initialized with the ffmpeg command. Next we can add [global_options]. After that we can begin configuring the file using {[input_file_options] -i input_url}. Lastly we can start config the output using {[output_file_options] output_url}.
-As we're using the webassebly version of ffmpeg we should run it first with run() function, as we'll do it in CMD. Next we pass all the prev mentioned commands within that run function.
-
-### vid.257
-
-Instead of running 3 ffmpeg funtions to process video frames and take snapshots separately we can run one extensive function to process the whole video at once, by passing multiple inputs and outputs under it.
-
-### vid.258
-
-Our screenshots will be stored as a binary data. Browsers don't allow us to display an img with a binary data. We must set an img tag's src attribute to a url, therefore we need to convert a screenshot from a binary array to a string. The readFile option passed to the FS function will indicate ffmpeg to read the file. There is a feature called BLOBs (binary large objs) for creating URLs. Note that blobs are immutable. By converting the binary data to a blob we would be able to render the screenshot. The buffer prop contains the actual data of a file. We can use JS's createObjectURL by passing a blob obj to it to creatae a URL.
-// EX.
-const screenshotURL = URL.createObjectURL(screenshotBlob);
-
-### vid.259
-
-Behind the scenes angular likes to sanitize our data before rendering the template. It's a security feature automated by angular. Unfortunately it will cause a problem with our images. Hyperlinks and img sources are sanitized by angular. If angular doesn't trust the URL, it will prefix the URL with the word unsafe, which in turn will cause the browser to throw an error and preventing an img from appering on the page. Angular has a class for bypassing the sanitization. Bypassing sanitization will require modifics to URL. Pipes are ideal for this purpose. In the cmd we can create a pipe by running ng g pipe pipeName command. It's auto registered in modules file and 2 files are created. Pipes are decorated with @Pipe decorator, the min config for which is its name. PipeTransform interface is implemented by the class, which will force the class to define a method called transform. Angular will call that transform to process the val, so we can write our logic inside this method. The DomSanitizer class is an injectable service for bypassing the angular's sanitization. The bypassSecurityTrustUrl function will accept a URL and return an obj called SafeUrl. Angular will wrap our url with this obj and during the sanitization it won't touch our url.
-
-### vid.260
-
-We should prevent user from uploading new videos while ffmpeg is procesisng the previously updated video for snapshots.
-
-### vid.261
-
-We shoud enable the user to select 1 screenshot to represent their video. We should visually indicate the selected snapshot.
-
-### vid.262
-
-We should update our previously defined rules for firebase to accept images as well. Parenthesis will group a pair of conditions.
-
-### vid.263
-
-Blobs are accepted by firebase. For that we need to convert our urls back to blobs. The urls created by our app are blob urls, which point to our system's memo. We're allowed to access our files through these urls. Normally we'd run the fetch function with api urls, however it's completely acceptable to fetch a file from a blob. Modern browsers will understand that file is from the users memo. We can grab the file by passing the blob function to the response by the fetch. Now we should grab the blob from the url using the function we denife.
-
-### vid.264
-
-The upload progress bar should take into account both video and img uploads. Since we're dealing with uploads we'll be dealing with doubling the observables. It would be necessary to merge the observables into a single observable. CombineLatest operator will subscribe to multiple observables and stream it as one value as mentioned before.
-
-### vid.265
-
-We need to add a screenshot url to corresponding doc we save in DB. forkJoin operator will accept an array of observables. Vals aren't pushed to the subscriber until all observables have been completed. Upon completion the latest vals pushed by each observable are streamed to the subscriber. Note that observables must be passed with an array wrapped around them.
-
-### vid.266
-
-If user deletes a clip, the corresp. screenshot should be deleted as well.
+Finally remove the reference to the given module from the app.module file.
